@@ -1,0 +1,49 @@
+notes on loading: 
+
+1. To load data in, we have the following address format: 
+
+address_1, address_2, city_name, state_code, zipcode
+
+maps to:
+addresses.address_1
+addresses.address_2
+addresses.is_standardized=False
+addresses.last_updated=now
+
+cities.city
+cities.state_code
+(then update vertex cities.city_states = city_name + state_code)
+
+zips.zipcode
+
+---
+If standardized address is already found, skip and proceed to geocoding
+Address Standardization (Assuming for now, we use ESRI), which then updates: 
+
+/* Needs to have a shim layer here to map address standardizer to db structure. */
+
+addresses.is_standardized=True
+standardized_addresses.match_addr = address_1 + city + state + zipcode
+Edge is then linked to address_uid based on a match of:
+user_address_1, user_address_2, user_city_name, user_state_code, user_zipcode, 
+
+Now we have a 1:n relationship of n unstandardized addresses to 1 standardized address
+---
+Geocoding is triggered here, if it's a separate step from 
+address_attributes then gets updated with the geocoded result, which is 1:1 with standardized address
+
+address_attributes.status
+address_attributes.score
+address_attributes.addr_type
+address_attributes.place_name
+address_attributes.place_addr
+[...]
+
+---
+After geocoding results are saved, we continue on to the publication pipeline, which can involve
+a) Extracting data by batch from the database
+b) Saving the batch's results prior to delivery. 
+
+Either way, the same data structure goes to the publication pipeline. 
+
+

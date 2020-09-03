@@ -1,9 +1,124 @@
 SET exit_on_error = FALSE
-CREATE VERTEX organisation(PRIMARY_ID id INT, name STRING)
-CREATE VERTEX financier(PRIMARY_ID id INT, name STRING)
+DROP ALL
+CREATE VERTEX address(
+    PRIMARY_ID uid STRING, 
+    address_1 STRING, // Compress address_1 + address_2, and address_3 
+    address_2 STRING,
+    address_3 STRING,
+    last_updated DATETIME
+)
 
-CREATE DIRECTED EDGE shareholding (FROM financier, TO organisation)
-CREATE DIRECTED EDGE bondholding (FROM financier, TO organisation)
-CREATE DIRECTED EDGE loan (FROM financier, TO organisation)
+CREATE VERTEX is_standardized(
+    PRIMARY_ID standard STRING // Bool doesn't work
+)
 
-CREATE GRAPH @graphname@(organisation, financier, shareholding, bondholding, loan)
+CREATE VERTEX is_geocoded(
+    PRIMARY_ID geo STRING // Bool doesn't work
+)
+
+CREATE VERTEX is_dirty(
+    PRIMARY_ID dirty STRING // Bool doesn't work
+)
+
+CREATE VERTEX standardized_address(
+    PRIMARY_ID match_addr STRING, // match_addr field of ArcGIS
+    addr_type STRING,
+    dpv_match_code STRING, // From SmartyStreets, options: Y, N, S, D
+    dpv_footnotes STRING // From SmartyStreets, options: https://smartystreets.com/docs/cloud/us-street-api#dpvfootnotes
+)
+
+CREATE VERTEX state(
+    PRIMARY_ID state_code STRING,
+    state_name STRING
+)
+
+CREATE VERTEX city(
+    PRIMARY_ID city_states STRING,
+    name STRING
+)
+
+CREATE VERTEX zip(
+    PRIMARY_ID zipcode STRING,
+    zip_4 STRING
+)
+
+CREATE VERTEX county(
+    PRIMARY_ID state_county STRING,
+    name STRING,
+    county_wkid INT,
+    county_shape STRING
+)
+
+CREATE VERTEX location(
+    PRIMARY_ID lat_lng STRING,
+    latitude FLOAT,
+    longitude FLOAT,
+    score FLOAT
+)
+
+CREATE VERTEX address_attribute (
+    PRIMARY_ID match_addr_and_type STRING, // Maps to match_addr + addr_type (unique)
+    status STRING,
+    score FLOAT,
+    match_attr STRING,
+    addr_type STRING, 
+    place_name STRING,
+    place_addr STRING,
+    rank FLOAT,
+    add_num STRING,
+    street_name STRING,
+    street_type STRING,
+    street_addr STRING,
+    block STRING,
+    sector STRING,
+    neighborhood STRING,
+    district STRING,
+    metro_area STRING,
+    subregion STRING,
+    region STRING,
+    postal STRING,
+    postal_ext STRING,
+    x FLOAT,
+    y FLOAT,
+    display_x FLOAT,
+    display_y FLOAT,
+    x_min FLOAT,
+    x_max FLOAT,
+    y_min FLOAT,
+    y_max FLOAT,
+    shape STRING
+    //attributes STRING COMPRESS,
+    //extent STRING COMPRESS
+)
+
+CREATE VERTEX address_key (
+    PRIMARY_ID uid STRING, //-- uid refers to the primary key in the source datatable
+    uid_type STRING,
+    sec_id STRING,
+    source_table STRING,
+    last_updated DATETIME
+)
+
+CREATE VERTEX batch_job (
+    PRIMARY_ID batch_id STRING,
+    output_params STRING,
+    data_source STRING,
+    avg_accuracy FLOAT,
+    avg_duplication FLOAT
+)
+
+
+CREATE GRAPH @graphname@(address, is_standardized, is_geocoded, is_dirty, standardized_address, state, city, zip, county, location, address_attribute, address_key, batch_job)
+
+CREATE DIRECTED EDGE ADDRESS_IS_STANDARDIZED ( FROM address, TO is_standardized ) WITH REVERSE_EDGE="IS_STANDARDIZED_REVERSE"
+CREATE DIRECTED EDGE ADDRESS_IS_GEOCODED ( FROM address, TO is_geocoded ) WITH REVERSE_EDGE="IS_GEOCODED_REVERSE"
+CREATE DIRECTED EDGE ADDRESS_IS_DIRTY ( FROM address, TO is_dirty ) WITH REVERSE_EDGE="IS_DIRTY_REVERSE"
+CREATE DIRECTED EDGE IS_LOCATED_IN_CITY ( FROM address, TO city ) WITH REVERSE_EDGE="IS_LOCATED_IN_CITY_REVERSE"
+CREATE DIRECTED EDGE IS_LOCATED_IN_STATE ( FROM address, TO state ) WITH REVERSE_EDGE="IS_LOCATED_IN_STATE_REVERSE"
+CREATE DIRECTED EDGE IS_LOCATED_IN_ZIP ( FROM address, TO zip ) WITH REVERSE_EDGE="IS_LOCATED_IN_ZIP_REVERSE"
+CREATE DIRECTED EDGE IS_LOCATED_IN_COUNTY ( FROM address, TO county ) WITH REVERSE_EDGE="IS_LOCATED_IN_COUNTY_REVERSE"
+CREATE DIRECTED EDGE IS_AT_GEOLOCATION ( FROM address, TO location ) WITH REVERSE_EDGE="IS_AT_GEOLOCATION_REVERSE"
+
+CREATE DIRECTED EDGE HAS_ATTRIBUTES ( FROM address, TO address_attribute ) WITH REVERSE_EDGE="HAS_ATTRIBUTES_REVERSE"
+CREATE DIRECTED EDGE IS_IN_BATCH ( FROM batch_job, TO address ) WITH REVERSE_EDGE="IS_IN_BATCH_REVERSE"
+CREATE DIRECTED EDGE IS_FROM_SOURCE ( FROM address, TO address_key ) WITH REVERSE_EDGE="IS_FROM_SOURCE_REVERSE"

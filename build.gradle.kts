@@ -14,6 +14,10 @@ plugins {
     id("io.github.http-builder-ng.http-plugin") version "0.1.1"
 }
 
+dependencies {
+    gsqlRuntime("com.tigergraph.client:gsql_client:2.6.2")
+}
+
 repositories {
     jcenter()
 }
@@ -59,6 +63,8 @@ tigergraph {
         gsqlClientVersion.set(it)
     }
     gCertPath?.let {
+        println("found cert")
+        println(it)
         caCert.set(it)
     }
     gSecret?.let {
