@@ -1,0 +1,38 @@
+drop job loadAddresses
+
+create loading job loadAddresses for graph geocoding {
+
+    define filename f1;
+    define header fin = "ADDRESS_1","ADDRESS_2","CITY","STATE_CODE","ZIPCODE";
+
+    LOAD f1 
+        TO VERTEX address VALUES (
+            GSQL_CONCAT($"ADDRESS_1",$"ADDRESS_2",$"CITY",$"STATE_CODE",$"ZIPCODE"), 
+            $"ADDRESS_1", 
+            $"ADDRESS_2", 
+            _, 
+            _,
+        ),
+        TO EDGE IS_LOCATED_IN_CITY VALUES (
+            GSQL_CONCAT($"ADDRESS_1",$"ADDRESS_2",$"CITY",$"STATE_CODE",$"ZIPCODE"),
+            GSQL_CONCAT($"CITY",$"STATE_CODE")
+        ),
+        TO VERTEX city VALUES (
+            GSQL_CONCAT($"CITY",$"STATE_CODE"),
+            $"CITY"
+        ),
+        TO EDGE IS_LOCATED_IN_STATE VALUES (
+            GSQL_CONCAT($"ADDRESS_1",$"ADDRESS_2",$"CITY",$"STATE_CODE",$"ZIPCODE"),
+        )
+        TO VERTEX state VALUES (
+            $"STATE_CODE",
+            _
+        ),
+        TO EDGE IS_LOCATED_IN_ZIP VALUES (
+            $"ZIPCODE"
+        )
+        TO VERTEX zip VALUES (
+            $"ZIPCODE",
+            _
+        ) using header="false", separator="|", user_defined_header="fin";
+}
