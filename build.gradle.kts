@@ -9,7 +9,7 @@ buildscript {
 }
 
 plugins {
-    id("com.optum.giraffle") version "1.3.3"
+    id("com.optum.giraffle") version "1.3.4.1"
     id("net.saliman.properties") version "1.5.1"
     id("io.github.http-builder-ng.http-plugin") version "0.1.1"
 }
@@ -209,6 +209,11 @@ tasks {
             httpConfig.request.setContentType("text/csv")
             val stream = File("data/AddressesProviders.csv").inputStream()
             httpConfig.request.setBody(stream)
+            httpConfig.response.success { fs, x ->
+                println(fs )
+                println(x)
+                println("Success")
+            }
         }
 
     }
